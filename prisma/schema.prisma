@@ -1,0 +1,64 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  password      String?        // Hashed with bcrypt (null for OAuth users)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  savedQueries  SavedQuery[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id          String   @id @default(cuid())
+  email       String
+  token       String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+}
+
+model University {
+  id            String                       @id @default(cuid())
+  externalId    String                       @unique // For de-duplication (e.g., Hipolabs or OpenAlex ID)
+  name          String
+  country       String
+  city          String?
+  ranking       Int?
+  tuitionMin    Float?
+  tuitionMax    Float?
+  livingCost    Float?
+  programs      String[]                     // Array of programs: e.g. ["Computer Science", "Engineering"]
+  website       String?
+  isActive      Boolean                      @default(true)
+  lastUpdated   DateTime                     @default(now())
+  embeddings    Unsupported("vector(768)")?  // pgvector for semantic search
+}
+
+model SavedQuery {
+  id          String   @id @default(cuid())
+  userId      String
+  query       String
+  response    String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
