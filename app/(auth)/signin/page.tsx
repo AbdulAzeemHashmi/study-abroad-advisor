@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslations, useI18n } from '@/lib/i18n';
 
-export default function SignInPage() {
+function SignInContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +27,11 @@ export default function SignInPage() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
-      if (errorParam === 'OAuthCallback' || errorParam === 'redirect_uri_mismatch' || errorParam === 'Configuration') {
+      if (
+        errorParam === 'OAuthCallback' ||
+        errorParam === 'redirect_uri_mismatch' ||
+        errorParam === 'Configuration'
+      ) {
         setGoogleOAuthNotice(true);
       } else {
         setError(errorParam);
@@ -207,5 +211,13 @@ export default function SignInPage() {
         </Link>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm text-slate-500">Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }
