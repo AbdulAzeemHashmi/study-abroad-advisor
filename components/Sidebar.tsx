@@ -52,10 +52,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
   ];
 
   const sidebarContent = (
-    <div className="flex h-full flex-col justify-between p-4 bg-slate-900 text-slate-100 border-r border-slate-800">
+    <div className="flex h-full flex-col justify-between p-4 bg-blue-950 text-slate-100 border-r border-blue-900">
       <div>
         {/* Logo & Brand Header */}
-        <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-6 border-b border-blue-900">
           <Link
             href="/dashboard"
             className="flex items-center gap-3 overflow-hidden group"
@@ -80,7 +80,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
           {/* Desktop Collapse Toggle */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:flex h-7 w-7 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            className="hidden md:flex h-7 w-7 items-center justify-center rounded-lg border border-blue-800 bg-blue-900 text-slate-300 hover:bg-blue-800 hover:text-white transition-colors"
             title={isCollapsed ? t('expandSidebar', 'Expand Sidebar') : t('collapseSidebar', 'Collapse Sidebar')}
           >
             {isCollapsed ? (
@@ -93,7 +93,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
           {/* Mobile Close Button */}
           <button
             onClick={() => setIsMobileOpen(false)}
-            className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-900 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -113,7 +113,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
                   'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all group relative',
                   isActive
                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold shadow-inner'
-                    : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
+                    : 'text-slate-400 hover:bg-blue-900/80 hover:text-slate-200'
                 )}
                 title={isCollapsed ? item.name : undefined}
               >
@@ -142,7 +142,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
 
       {/* Footer Info Box */}
       {!isCollapsed && (
-        <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3.5">
+        <div className="rounded-xl border border-blue-900 bg-blue-950/70 p-3.5">
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>{t('zeroCostGuarantee', '100% Free Guidance')}</span>
@@ -160,7 +160,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'hidden md:flex flex-col border-r border-slate-800 bg-slate-900 transition-all duration-300 shrink-0 z-30 sticky top-0 h-screen',
+          'hidden md:flex flex-col border-r border-blue-900 bg-blue-950 transition-all duration-300 shrink-0 z-30 sticky top-0 h-screen',
           isCollapsed ? 'w-20' : 'w-64'
         )}
       >
@@ -171,12 +171,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-blue-950/70 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileOpen(false)}
           />
           <div
             className={cn(
-              'fixed inset-y-0 w-72 bg-slate-900 shadow-2xl transition-transform duration-300 z-50',
+              'fixed inset-y-0 w-72 bg-blue-950 shadow-2xl transition-transform duration-300 z-50',
               dir === 'rtl' ? 'right-0' : 'left-0'
             )}
           >
