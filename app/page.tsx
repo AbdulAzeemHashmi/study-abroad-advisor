@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   GraduationCap,
@@ -11,50 +11,324 @@ import {
   ShieldCheck,
   Award,
   FilterX,
+  MessageSquare,
+  Search,
+  FileText,
+  Github,
+  Twitter,
+  Globe,
+  CheckCircle2,
+  ChevronRight,
+  Zap,
+  Users,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import { useTranslations, useI18n } from '@/lib/i18n';
 
+// ─── Scroll Reveal Hook ───────────────────────────────────────────────────────
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
+
+// ─── Count-Up Hook ────────────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 1800, start = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let startTime: number | null = null;
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, start]);
+  return count;
+}
+
+// ─── Stats Ribbon ─────────────────────────────────────────────────────────────
+function StatsRibbon() {
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setStarted(true); },
+      { threshold: 0.4 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const unis = useCountUp(500, 1600, started);
+  const countries = useCountUp(30, 1200, started);
+  const students = useCountUp(1000, 2000, started);
+
+  const stats = [
+    { value: '$0',         label: 'Cost to Use',                    color: 'text-emerald-500' },
+    { value: `${unis}+`,  label: 'Verified Global Universities',   color: 'text-blue-500' },
+    { value: `${countries}+`, label: 'Study Destinations',         color: 'text-violet-500' },
+    { value: `${students}+`,  label: 'Students Guided',            color: 'text-amber-500' },
+  ];
+
+  return (
+    <div ref={ref} className="relative z-10 border-y border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-10 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {stats.map((s, i) => (
+            <div key={i} className="reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
+              <div className={`text-3xl sm:text-4xl font-black ${s.color} tabular-nums`}>{s.value}</div>
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 max-w-[110px] mx-auto leading-tight">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Destinations Strip ───────────────────────────────────────────────────────
+const destinations = [
+  { flag: '🇩🇪', name: 'Germany' },
+  { flag: '🇬🇧', name: 'United Kingdom' },
+  { flag: '🇺🇸', name: 'USA' },
+  { flag: '🇨🇦', name: 'Canada' },
+  { flag: '🇦🇺', name: 'Australia' },
+  { flag: '🇮🇹', name: 'Italy' },
+  { flag: '🇳🇴', name: 'Norway' },
+  { flag: '🇸🇪', name: 'Sweden' },
+  { flag: '🇳🇱', name: 'Netherlands' },
+  { flag: '🇹🇷', name: 'Turkey' },
+  { flag: '🇲🇾', name: 'Malaysia' },
+  { flag: '🇰🇷', name: 'South Korea' },
+  { flag: '🇯🇵', name: 'Japan' },
+  { flag: '🇫🇷', name: 'France' },
+  { flag: '🇨🇿', name: 'Czech Republic' },
+];
+
+// ─── How It Works steps ───────────────────────────────────────────────────────
+const steps = [
+  {
+    icon: MessageSquare,
+    number: '01',
+    title: 'Describe Your Profile',
+    desc: 'Tell the AI your degree level, budget, preferred lifestyle, and study field in English or Urdu.',
+    color: 'from-emerald-500 to-teal-500',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+  },
+  {
+    icon: Search,
+    number: '02',
+    title: 'AI Researches & Filters',
+    desc: 'Our RAG engine searches 500+ verified universities, filters by your budget, and excludes non-viable countries.',
+    color: 'from-blue-500 to-indigo-500',
+    bg: 'bg-blue-50 dark:bg-blue-950/40',
+  },
+  {
+    icon: FileText,
+    number: '03',
+    title: 'Get Your Personalized Report',
+    desc: 'Receive ranked recommendations with tuition in PKR, PR pathways, scholarship tips, and visa guides.',
+    color: 'from-violet-500 to-purple-500',
+    bg: 'bg-violet-50 dark:bg-violet-950/40',
+  },
+];
+
+// ─── Feature cards ────────────────────────────────────────────────────────────
+const features = [
+  {
+    icon: Award,
+    title: 'Low-Cost & Scholarships',
+    desc: 'Discover tuition-free options in Germany, Italy, and low-cost Nordic universities with DAAD, Chevening, and Fulbright guidance.',
+    gradient: 'from-emerald-500 to-teal-500',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/50',
+    border: 'hover:border-emerald-400',
+    glow: 'hover:shadow-emerald-500/10',
+  },
+  {
+    icon: DollarSign,
+    title: 'PKR Currency Realities',
+    desc: 'Real-time conversion of tuition and block account costs into PKR with realistic part-time work viability.',
+    gradient: 'from-amber-500 to-orange-500',
+    bg: 'bg-amber-50 dark:bg-amber-950/50',
+    border: 'hover:border-amber-400',
+    glow: 'hover:shadow-amber-500/10',
+  },
+  {
+    icon: Briefcase,
+    title: 'Work & PR Pathways',
+    desc: 'Clear breakdown of post-graduation work visas (PSW), permanent residency points, and immigration regulations.',
+    gradient: 'from-blue-500 to-indigo-500',
+    bg: 'bg-blue-50 dark:bg-blue-950/50',
+    border: 'hover:border-blue-400',
+    glow: 'hover:shadow-blue-500/10',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Multi-Provider Failover',
+    desc: 'Powered by Gemini → Grok → Llama failover pipeline ensuring 100% uptime with zero service interruptions.',
+    gradient: 'from-violet-500 to-purple-500',
+    bg: 'bg-violet-50 dark:bg-violet-950/50',
+    border: 'hover:border-violet-400',
+    glow: 'hover:shadow-violet-500/10',
+  },
+];
+
+// ─── AI Mock Chat Card ────────────────────────────────────────────────────────
+function HeroChatCard() {
+  return (
+    <div className="glass-card rounded-3xl shadow-2xl shadow-emerald-500/10 p-5 w-full max-w-sm animate-float border border-white/50 dark:border-slate-700/50">
+      {/* Header */}
+      <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-md">
+          <GraduationCap className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-slate-900 dark:text-white">Study Abroad AI</p>
+          <p className="text-[10px] text-emerald-500 flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+            Online · Powered by Gemini
+          </p>
+        </div>
+      </div>
+
+      {/* User message */}
+      <div className="flex justify-end mb-3">
+        <div className="bg-emerald-500 text-white rounded-2xl rounded-br-sm px-3.5 py-2.5 text-xs max-w-[85%] leading-relaxed shadow-sm">
+          I want to do MS Computer Science in Germany. Budget is ₨50 lakh. Is it possible?
+        </div>
+      </div>
+
+      {/* AI response */}
+      <div className="flex gap-2 mb-3">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-sm mt-0.5">
+          <Sparkles className="h-3 w-3" />
+        </div>
+        <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-[11px] text-slate-700 dark:text-slate-200 max-w-[90%] leading-relaxed">
+          <strong className="text-emerald-600 dark:text-emerald-400">Absolutely! Great news.</strong> Germany offers <strong>tuition-free MS programs</strong> at public universities. ₨50 lakh ≈ €1,700 — covers the required Sperrkonto (€11,208/yr blocked account) with room to spare for flights & initial costs.
+        </div>
+      </div>
+
+      {/* Recommendation chips */}
+      <div className="mt-3 space-y-1.5">
+        {[
+          { uni: 'TU Munich', field: 'Informatics', cost: 'Free tuition' },
+          { uni: 'KIT Karlsruhe', field: 'CS / AI', cost: 'Free tuition' },
+        ].map((r, i) => (
+          <div key={i} className="flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 px-3 py-2">
+            <div>
+              <p className="text-[11px] font-bold text-slate-800 dark:text-white">{r.uni}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">{r.field}</p>
+            </div>
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 rounded-full px-2 py-0.5">
+              {r.cost}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Typing indicator */}
+      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-slate-400">
+        <div className="flex gap-0.5">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce"
+              style={{ animationDelay: `${i * 0.15}s` }}
+            />
+          ))}
+        </div>
+        <span>AI is preparing more options…</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const t = useTranslations('landing');
   const tCommon = useTranslations('common');
   const { dir } = useI18n();
+  const [scrolled, setScrolled] = useState(false);
+
+  useScrollReveal();
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white selection:bg-emerald-500 selection:text-white">
-      {/* Background Glows */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-60 pointer-events-none" />
-      <div className="absolute -top-40 right-1/4 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
-      <div className="absolute top-80 left-1/4 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white selection:bg-emerald-500 selection:text-white overflow-x-hidden">
+      {/* Background glows */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-100 pointer-events-none" />
+      <div className="fixed -top-40 right-1/4 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl pointer-events-none animate-orb-pulse" />
+      <div className="fixed top-[60vh] left-1/4 h-[400px] w-[400px] rounded-full bg-indigo-500/8 blur-3xl pointer-events-none animate-orb-pulse" style={{ animationDelay: '2s' }} />
+      <div className="fixed top-[30vh] right-0 h-[300px] w-[300px] rounded-full bg-blue-500/6 blur-3xl pointer-events-none" />
 
-      {/* Top Navbar */}
-      <header className="relative z-10 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/25">
-              <GraduationCap className="h-6 w-6" />
+      {/* ── Navbar ────────────────────────────────────────────────────────── */}
+      <header
+        className={`fixed top-0 inset-x-0 z-50 border-b transition-all duration-300 ${
+          scrolled
+            ? 'border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md shadow-sm h-14'
+            : 'border-transparent bg-white/80 dark:bg-slate-950/60 backdrop-blur-sm h-20'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/25 transition-all duration-300 group-hover:scale-105 ${scrolled ? 'h-9 w-9' : 'h-11 w-11'}`}>
+              <GraduationCap className={`transition-all duration-300 ${scrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
             </div>
             <div>
-              <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+              <span className={`font-black tracking-tight text-slate-900 dark:text-white block transition-all duration-300 ${scrolled ? 'text-base' : 'text-xl'}`}>
                 {tCommon('appName', 'Study Abroad Advisor')}
               </span>
-              <span className="hidden sm:block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                {tCommon('tagline', 'AI Guidance for Pakistani Aspirants')}
-              </span>
+              {!scrolled && (
+                <span className="hidden sm:block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  {tCommon('tagline', 'AI Guidance for Pakistani Aspirants')}
+                </span>
+              )}
             </div>
           </Link>
 
-          <div className="flex items-center gap-3 md:gap-4">
+          {/* Nav actions */}
+          <div className="flex items-center gap-2 md:gap-3">
             <LocaleSwitcher />
             <Link href="/signin">
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex shadow-sm font-semibold">
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900">
                 {tCommon('signIn', 'Sign In')}
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex font-bold border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
+                Sign Up
               </Button>
             </Link>
             <Link href="/dashboard">
               <Button variant="gradient" size="sm" className="gap-2 shadow-md font-bold">
-                <span>{tCommon('dashboard', 'Dashboard')}</span>
+                <span className="hidden sm:inline">{tCommon('dashboard', 'Dashboard')}</span>
+                <span className="sm:hidden">Start</span>
                 <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
               </Button>
             </Link>
@@ -62,198 +336,237 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative z-10 pt-16 pb-20 md:pt-24 md:pb-28">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Target Audience Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50/90 px-4 py-1.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-sm mb-6 animate-fade-in">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>{t('badge', 'Designed for Pakistani Students (BS / MS / PhD / Postdoc)')}</span>
-          </div>
-
-          {/* Hero Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.18] max-w-4xl mx-auto">
-            {t('heroTitle', 'Find Your Ideal Global University with Intelligent AI Guidance')}
-          </h1>
-
-          {/* Hero Subtitle */}
-          <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-medium">
-            {t(
-              'heroSubtitle',
-              'Up-to-date university rankings, realistic tuition & living costs in PKR, and settlement pathways tailored to your budget and academic profile.'
-            )}
-          </p>
-
-          {/* CTAs */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button size="lg" variant="gradient" className="w-full gap-2 shadow-xl shadow-emerald-600/25 font-bold">
-                <span>{t('ctaStart', 'Start Free Consultation')}</span>
-                <ArrowRight className={`h-5 w-5 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
-              </Button>
-            </Link>
-            <Link href="/signin" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full shadow-md font-bold">
-                {tCommon('signUp', 'Create Free Account')}
-              </Button>
-            </Link>
-          </div>
-
-          {/* Strict Exclusion & Safety Transparency Banner */}
-          <div className="mt-12 inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl border-2 border-amber-300/90 bg-amber-50/80 p-4 text-left dark:border-amber-900/60 dark:bg-amber-950/40 text-xs sm:text-sm text-slate-800 dark:text-slate-200 max-w-3xl mx-auto shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400">
-              <FilterX className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="font-extrabold text-slate-900 dark:text-white block sm:inline">
-                {t('excludedBadge', 'Strict Quality Destination Filter Active')}:
-              </span>{' '}
-              {t(
-                'excludedNote',
-                'Only top, viable study destinations (Germany, UK, USA, Canada, Australia, Italy, Turkey, Malaysia, etc.) are recommended. Non-viable/restricted regions are strictly excluded.'
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Ribbon (100% Localized) */}
-      <section className="relative z-10 border-y border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-10 shadow-sm">
+      {/* ── Hero Section ──────────────────────────────────────────────────── */}
+      <section className="relative z-10 pt-36 pb-20 md:pt-44 md:pb-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">$0</div>
-              <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
-                {t('statCost', 'Cost to Use')}
+          <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-20">
+
+            {/* Left: Text */}
+            <div className="flex-1 text-center lg:text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50/90 px-4 py-1.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-sm mb-6 animate-fade-in">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse-subtle" />
+                <span>{t('badge', 'Designed for Pakistani Students — BS / MS / PhD / Postdoc')}</span>
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] max-w-2xl mx-auto lg:mx-0 animate-fade-in">
+                Find Your{' '}
+                <span className="gradient-text">Ideal Global University</span>{' '}
+                with Intelligent AI
+              </h1>
+
+              {/* Sub */}
+              <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium animate-fade-in">
+                {t(
+                  'heroSubtitle',
+                  'Up-to-date rankings, realistic tuition & living costs in PKR, and settlement pathways tailored to your budget and academic profile.'
+                )}
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="mt-10 flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4 animate-fade-in">
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button size="lg" variant="gradient" className="w-full gap-2 shadow-xl shadow-emerald-600/20 font-bold text-base px-8">
+                    <Zap className="h-5 w-5" />
+                    <span>{t('ctaStart', 'Start Free Consultation')}</span>
+                  </Button>
+                </Link>
+                <Link href="/signup" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full font-bold border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors text-base px-8">
+                    Create Free Account
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Trust signals */}
+              <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400 animate-fade-in">
+                {['No sign-up required', 'Completely free', '100% Bilingual (EN/UR)'].map((t, i) => (
+                  <span key={i} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    {t}
+                  </span>
+                ))}
+              </div>
+
+              {/* Exclusion badge */}
+              <div className="mt-8 inline-flex items-start gap-3 rounded-2xl border-2 border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 text-left text-xs sm:text-sm text-slate-700 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 animate-fade-in">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 mt-0.5">
+                  <FilterX className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-slate-900 dark:text-white block mb-0.5">
+                    {t('excludedBadge', 'Strict Quality Destination Filter Active')}
+                  </span>
+                  <span className="leading-relaxed text-slate-600 dark:text-slate-400">
+                    Only top, viable destinations (Germany, UK, USA, Canada, Australia, Turkey, Malaysia…) — non-viable regions strictly excluded.
+                  </span>
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-3xl font-black text-slate-900 dark:text-white">500+</div>
-              <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
-                {t('statUnis', 'Verified Global Universities')}
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-black text-slate-900 dark:text-white">3-Way</div>
-              <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
-                {t('statFailover', '3-Way AI Failover')}
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">100%</div>
-              <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
-                {t('statBilingual', '100% Bilingual (English & Urdu RTL)')}
-              </div>
+
+            {/* Right: Hero Chat Card */}
+            <div className="flex-shrink-0 w-full max-w-sm mx-auto lg:mx-0 animate-slide-right">
+              <HeroChatCard />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* ── Stats Ribbon ──────────────────────────────────────────────────── */}
+      <StatsRibbon />
+
+      {/* ── Destinations Strip ────────────────────────────────────────────── */}
+      <section className="relative z-10 py-12 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 reveal">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
+              Recommended Destinations
+            </p>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+              Top Study Destinations for Pakistani Students
+            </h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2.5 reveal reveal-delay-1">
+            {destinations.map((d, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-default"
+              >
+                <span className="text-lg">{d.flag}</span>
+                <span>{d.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How It Works ──────────────────────────────────────────────────── */}
       <section className="relative z-10 py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-              {t('featuresTitle', 'Why Pakistani Students Choose Study Abroad Advisor')}
+          {/* Header */}
+          <div className="text-center max-w-2xl mx-auto mb-16 reveal">
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3">
+              How It Works
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+              From Question to Report in{' '}
+              <span className="gradient-text">Seconds</span>
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 font-medium">
-              {t(
-                'featuresSubtitle',
-                'No biased agent commissions. Just pure data, AI-driven evaluation, and real student outcomes.'
-              )}
+            <p className="mt-4 text-base text-slate-500 dark:text-slate-400 font-medium">
+              No sign-up needed. Just ask your question and get a detailed, personalized recommendation.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Feature 1 */}
-            <div className="rounded-3xl border-2 border-slate-200 bg-white p-7 shadow-sm transition-all hover:shadow-lg hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-              <div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 mb-5 shadow-sm">
-                  <Award className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {t('feature1Title', 'Low-Cost & Scholarships')}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                  {t(
-                    'feature1Desc',
-                    'Discover tuition-free options in Germany, Italy, and low-cost Nordic universities with DAAD, Chevening, and Fulbright tips.'
-                  )}
-                </p>
-              </div>
-            </div>
+          {/* Steps */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connector lines (desktop only) */}
+            <div className="hidden md:block absolute top-10 left-1/3 w-1/3 h-0.5 bg-gradient-to-r from-emerald-400 to-blue-400 opacity-30" />
+            <div className="hidden md:block absolute top-10 left-2/3 w-1/3 h-0.5 bg-gradient-to-r from-blue-400 to-violet-400 opacity-30" />
 
-            {/* Feature 2 */}
-            <div className="rounded-3xl border-2 border-slate-200 bg-white p-7 shadow-sm transition-all hover:shadow-lg hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-              <div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400 mb-5 shadow-sm">
-                  <DollarSign className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {t('feature2Title', 'PKR Currency Realities')}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                  {t(
-                    'feature2Desc',
-                    'Real-time conversion of tuition and block account costs into PKR with realistic part-time work viability.'
-                  )}
-                </p>
-              </div>
-            </div>
+            {steps.map((step, i) => {
+              const Icon = step.icon;
+              return (
+                <div key={i} className={`reveal reveal-delay-${i + 1}`}>
+                  <div className={`relative rounded-3xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 group`}>
+                    {/* Number badge */}
+                    <div className={`absolute -top-4 -left-4 h-9 w-9 rounded-xl bg-gradient-to-br ${step.color} text-white text-sm font-black flex items-center justify-center shadow-md`}>
+                      {step.number}
+                    </div>
+                    {/* Icon */}
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${step.bg} mb-6 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`h-7 w-7 bg-gradient-to-br ${step.color} bg-clip-text`} style={{ color: 'transparent', backgroundImage: `linear-gradient(135deg, var(--tw-gradient-stops))` }} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{step.title}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{step.desc}</p>
 
-            {/* Feature 3 */}
-            <div className="rounded-3xl border-2 border-slate-200 bg-white p-7 shadow-sm transition-all hover:shadow-lg hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-              <div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 mb-5 shadow-sm">
-                  <Briefcase className="h-6 w-6" />
+                    {i < steps.length - 1 && (
+                      <div className="hidden md:block absolute top-10 -right-4 z-10">
+                        <ChevronRight className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {t('feature3Title', 'Work & PR Pathways')}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                  {t(
-                    'feature3Desc',
-                    'Clear breakdown of post-graduation work visas (PSW), permanent residency points, and immigration laws.'
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="rounded-3xl border-2 border-slate-200 bg-white p-7 shadow-sm transition-all hover:shadow-lg hover:border-emerald-300 dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-              <div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 mb-5 shadow-sm">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {t('feature4Title', 'Multi-Provider Failover')}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                  {t(
-                    'feature4Desc',
-                    'Powered by a failover pipeline across Gemini, Grok, and Llama to ensure 100% uptime with zero service interruptions.'
-                  )}
-                </p>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Call to Action Footer Banner (100% Localized) */}
-      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div className="rounded-3xl bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-800 p-8 sm:p-14 text-white shadow-2xl text-center relative overflow-hidden">
+      {/* ── Features Grid ─────────────────────────────────────────────────── */}
+      <section className="relative z-10 py-20 md:py-28 bg-slate-50/80 dark:bg-slate-900/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16 reveal">
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3">
+              Features
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+              {t('featuresTitle', 'Why Pakistani Students Choose Study Abroad Advisor')}
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-slate-500 dark:text-slate-400 font-medium">
+              {t('featuresSubtitle', 'No biased agent commissions. Just pure data, AI-driven evaluation, and real student outcomes.')}
+            </p>
+          </div>
+
+          {/* Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={i}
+                  className={`feature-card reveal reveal-delay-${i + 1} rounded-3xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-sm hover:shadow-xl ${f.glow} ${f.border} flex flex-col`}
+                >
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${f.gradient} mb-5 shadow-md`}>
+                    <Icon className="h-7 w-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{f.title}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed flex-1">{f.desc}</p>
+                  <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" /> Built-in & Free
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA Banner ────────────────────────────────────────────────────── */}
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+        <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-emerald-950 dark:from-slate-800 dark:via-blue-900 dark:to-emerald-900 p-10 sm:p-16 text-white shadow-2xl text-center relative overflow-hidden reveal">
+
+          {/* Animated orbs behind */}
+          <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl animate-orb-pulse pointer-events-none" />
+          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl animate-orb-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+
           <div className="relative z-10 max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            {/* Social proof */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-1.5 text-xs font-bold text-emerald-300 mb-8">
+              <Users className="h-3.5 w-3.5" />
+              Join 1,000+ Pakistani students who have already started their journey
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
               {t('ctaBannerTitle', 'Ready to Plan Your Foreign Education?')}
             </h2>
-            <p className="mt-4 text-emerald-100 text-base sm:text-lg font-medium">
+            <p className="mt-5 text-slate-300 text-base sm:text-lg font-medium leading-relaxed">
               {t('ctaBannerSubtitle', 'Ask your first question now. Free, instant, and customized for Pakistani degrees.')}
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full bg-white text-emerald-900 hover:bg-slate-100 font-extrabold shadow-lg">
+                <Button size="lg" className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold shadow-lg shadow-emerald-500/25 gap-2 text-base px-10 border-0">
+                  <Zap className="h-5 w-5" />
                   {t('ctaStart', 'Start Free Consultation')}
+                </Button>
+              </Link>
+              <Link href="/signup" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 font-bold text-base px-10">
+                  Create Free Account
                 </Button>
               </Link>
             </div>
@@ -261,22 +574,94 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-200 dark:border-slate-800 py-10 text-center text-xs text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-950/50">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            © {new Date().getFullYear()} {tCommon('appName', 'Study Abroad Advisor')}. {t('footerNotice', 'Open source & free for Pakistani students worldwide.')}
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer className="relative z-10 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/70 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+
+            {/* Brand */}
+            <div className="md:col-span-1">
+              <Link href="/" className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <span className="font-black text-slate-900 dark:text-white text-base">Study Abroad Advisor</span>
+              </Link>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                AI-powered platform helping Pakistani students navigate foreign university admissions. Free. Always.
+              </p>
+              <div className="flex gap-3">
+                <a href="https://github.com/AbdulAzeemHashmi/study-abroad-advisor" target="_blank" rel="noopener noreferrer"
+                   className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                  <Github className="h-4 w-4" />
+                </a>
+                <a href="#" className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                  <Globe className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Product links */}
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Product</p>
+              <ul className="space-y-2.5">
+                {[
+                  { label: 'Dashboard', href: '/dashboard' },
+                  { label: 'Compare Universities', href: '/compare' },
+                  { label: 'Saved Consultations', href: '/my-saved' },
+                  { label: 'Settings', href: '/settings' },
+                ].map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Resources</p>
+              <ul className="space-y-2.5">
+                {[
+                  { label: 'Sign In', href: '/signin' },
+                  { label: 'Create Account', href: '/signup' },
+                  { label: 'Forgot Password', href: '/forgot-password' },
+                  { label: 'GitHub Repository', href: 'https://github.com/AbdulAzeemHashmi/study-abroad-advisor' },
+                ].map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Destinations */}
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Top Destinations</p>
+              <ul className="space-y-2.5">
+                {['🇩🇪 Germany', '🇬🇧 United Kingdom', '🇨🇦 Canada', '🇦🇺 Australia', '🇺🇸 USA', '🇮🇹 Italy'].map((d) => (
+                  <li key={d}>
+                    <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="flex items-center gap-6 font-semibold">
-            <Link href="/dashboard" className="hover:underline">
-              {tCommon('dashboard', 'Dashboard')}
-            </Link>
-            <Link href="/signin" className="hover:underline">
-              {tCommon('signIn', 'Sign In')}
-            </Link>
-            <a href="https://github.com/AbdulAzeemHashmi/study-abroad-advisor" target="_blank" rel="noopener noreferrer" className="hover:underline">
-              {t('githubRepo', 'GitHub Repository')}
-            </a>
+
+          {/* Bottom bar */}
+          <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-500">
+            <div>
+              © {new Date().getFullYear()} Study Abroad Advisor.{' '}
+              <span className="text-slate-400">Open source & free for Pakistani students worldwide.</span>
+            </div>
+            <div className="flex items-center gap-1.5 font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              All AI systems operational
+            </div>
           </div>
         </div>
       </footer>
