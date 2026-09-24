@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Sparkles,
   Send,
@@ -44,10 +45,11 @@ export interface ConsultationResponse {
   excludedCheckPassed: boolean;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const t = useTranslations('dashboard');
   const tCommon = useTranslations('common');
   const { locale, dir } = useI18n();
+  const searchParams = useSearchParams();
 
   // Consultation query states
   const [query, setQuery] = useState('');
@@ -61,6 +63,7 @@ export default function DashboardPage() {
   const [result, setResult] = useState<ConsultationResponse | null>(null);
   const [error, setError] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const autoConsultTriggered = useRef(false);
 
   // Fully localized quick sample queries
   const samplePrompts = [
@@ -122,6 +125,16 @@ export default function DashboardPage() {
       setIsLoading(false);
     }
   };
+
+  // Auto-launch query passed from landing page or external link
+  useEffect(() => {
+    const qParam = searchParams.get('q');
+    if (qParam && !autoConsultTriggered.current) {
+      autoConsultTriggered.current = true;
+      setQuery(qParam);
+      handleConsult(qParam);
+    }
+  }, [searchParams]);
 
   const handleSaveQuery = async () => {
     if (!result) return;
@@ -576,5 +589,22 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[50vh] items-center justify-center p-8 text-center text-slate-500">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
+            <span>Loading Study Abroad Advisor...</span>
+          </div>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

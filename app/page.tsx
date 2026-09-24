@@ -15,17 +15,28 @@ import {
   Search,
   FileText,
   Github,
-  Twitter,
   Globe,
   CheckCircle2,
   ChevronRight,
   Zap,
   Users,
   TrendingUp,
+  Sun,
+  Moon,
+  Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import { useTranslations, useI18n } from '@/lib/i18n';
+
+// Interactive Components
+import HeroPromptLauncher from '@/components/landing/HeroPromptLauncher';
+import PkrCostCalculator from '@/components/landing/PkrCostCalculator';
+import ComparisonTable from '@/components/landing/ComparisonTable';
+import DestinationModal from '@/components/landing/DestinationModal';
+import FaqSection from '@/components/landing/FaqSection';
+import TestimonialsSection from '@/components/landing/TestimonialsSection';
+import MobileNavDrawer from '@/components/landing/MobileNavDrawer';
 
 // ─── Scroll Reveal Hook ───────────────────────────────────────────────────────
 function useScrollReveal() {
@@ -38,7 +49,7 @@ function useScrollReveal() {
           }
         });
       },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
     );
     document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -71,7 +82,7 @@ function StatsRibbon() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setStarted(true); },
-      { threshold: 0.4 }
+      { threshold: 0.3 }
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -95,7 +106,7 @@ function StatsRibbon() {
           {stats.map((s, i) => (
             <div key={i} className="reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
               <div className={`text-3xl sm:text-4xl font-black ${s.color} tabular-nums`}>{s.value}</div>
-              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 max-w-[110px] mx-auto leading-tight">
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1.5 max-w-[130px] mx-auto leading-tight">
                 {s.label}
               </div>
             </div>
@@ -106,7 +117,7 @@ function StatsRibbon() {
   );
 }
 
-// ─── Destinations Strip ───────────────────────────────────────────────────────
+// ─── Destinations Strip List ──────────────────────────────────────────────────
 const destinations = [
   { flag: '🇩🇪', name: 'Germany' },
   { flag: '🇬🇧', name: 'United Kingdom' },
@@ -131,15 +142,15 @@ const steps = [
     icon: MessageSquare,
     number: '01',
     title: 'Describe Your Profile',
-    desc: 'Tell the AI your degree level, budget, preferred lifestyle, and study field in English or Urdu.',
+    desc: 'Tell the AI your degree level, budget, CGPA, and study field in English or Urdu.',
     color: 'from-emerald-500 to-teal-500',
     bg: 'bg-emerald-50 dark:bg-emerald-950/40',
   },
   {
     icon: Search,
     number: '02',
-    title: 'AI Researches & Filters',
-    desc: 'Our RAG engine searches 500+ verified universities, filters by your budget, and excludes non-viable countries.',
+    title: 'AI Searches & Filters',
+    desc: 'Our RAG engine searches 500+ verified universities, calculates PKR costs, and excludes non-viable regions.',
     color: 'from-blue-500 to-indigo-500',
     bg: 'bg-blue-50 dark:bg-blue-950/40',
   },
@@ -160,36 +171,32 @@ const features = [
     title: 'Low-Cost & Scholarships',
     desc: 'Discover tuition-free options in Germany, Italy, and low-cost Nordic universities with DAAD, Chevening, and Fulbright guidance.',
     gradient: 'from-emerald-500 to-teal-500',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/50',
-    border: 'hover:border-emerald-400',
     glow: 'hover:shadow-emerald-500/10',
+    border: 'hover:border-emerald-400',
   },
   {
     icon: DollarSign,
     title: 'PKR Currency Realities',
     desc: 'Real-time conversion of tuition and block account costs into PKR with realistic part-time work viability.',
     gradient: 'from-amber-500 to-orange-500',
-    bg: 'bg-amber-50 dark:bg-amber-950/50',
-    border: 'hover:border-amber-400',
     glow: 'hover:shadow-amber-500/10',
+    border: 'hover:border-amber-400',
   },
   {
     icon: Briefcase,
     title: 'Work & PR Pathways',
     desc: 'Clear breakdown of post-graduation work visas (PSW), permanent residency points, and immigration regulations.',
     gradient: 'from-blue-500 to-indigo-500',
-    bg: 'bg-blue-50 dark:bg-blue-950/50',
-    border: 'hover:border-blue-400',
     glow: 'hover:shadow-blue-500/10',
+    border: 'hover:border-blue-400',
   },
   {
     icon: ShieldCheck,
     title: 'Multi-Provider Failover',
     desc: 'Powered by Gemini → Grok → Llama failover pipeline ensuring 100% uptime with zero service interruptions.',
     gradient: 'from-violet-500 to-purple-500',
-    bg: 'bg-violet-50 dark:bg-violet-950/50',
-    border: 'hover:border-violet-400',
     glow: 'hover:shadow-violet-500/10',
+    border: 'hover:border-violet-400',
   },
 ];
 
@@ -224,7 +231,7 @@ function HeroChatCard() {
           <Sparkles className="h-3 w-3" />
         </div>
         <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-[11px] text-slate-700 dark:text-slate-200 max-w-[90%] leading-relaxed">
-          <strong className="text-emerald-600 dark:text-emerald-400">Absolutely! Great news.</strong> Germany offers <strong>tuition-free MS programs</strong> at public universities. ₨50 lakh ≈ €1,700 — covers the required Sperrkonto (€11,208/yr blocked account) with room to spare for flights & initial costs.
+          <strong className="text-emerald-600 dark:text-emerald-400">Absolutely! Great news.</strong> Germany offers <strong>tuition-free MS programs</strong> at public universities. ₨50 lakh covers the required Sperrkonto (€11,208/yr blocked account) with room to spare for flights & visa.
         </div>
       </div>
 
@@ -257,7 +264,7 @@ function HeroChatCard() {
             />
           ))}
         </div>
-        <span>AI is preparing more options…</span>
+        <span>AI is ready for your query…</span>
       </div>
     </div>
   );
@@ -268,7 +275,11 @@ export default function LandingPage() {
   const t = useTranslations('landing');
   const tCommon = useTranslations('common');
   const { dir } = useI18n();
+
   const [scrolled, setScrolled] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
   useScrollReveal();
 
@@ -277,6 +288,24 @@ export default function LandingPage() {
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white selection:bg-emerald-500 selection:text-white overflow-x-hidden">
@@ -288,15 +317,15 @@ export default function LandingPage() {
 
       {/* ── Navbar ────────────────────────────────────────────────────────── */}
       <header
-        className={`fixed top-0 inset-x-0 z-50 border-b transition-all duration-300 ${
+        className={`fixed top-0 inset-x-0 z-40 border-b transition-all duration-300 ${
           scrolled
-            ? 'border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md shadow-sm h-14'
+            ? 'border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md shadow-sm h-16'
             : 'border-transparent bg-white/80 dark:bg-slate-950/60 backdrop-blur-sm h-20'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
             <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/25 transition-all duration-300 group-hover:scale-105 ${scrolled ? 'h-9 w-9' : 'h-11 w-11'}`}>
               <GraduationCap className={`transition-all duration-300 ${scrolled ? 'h-5 w-5' : 'h-6 w-6'}`} />
             </div>
@@ -312,19 +341,51 @@ export default function LandingPage() {
             </div>
           </Link>
 
-          {/* Nav actions */}
+          {/* Desktop Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <a href="#calculator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              {t('pkrCalculator', 'PKR Calculator')}
+            </a>
+            <a href="#destinations" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              {t('destinations', 'Destinations')}
+            </a>
+            <a href="#how-it-works" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              {t('howItWorks', 'How It Works')}
+            </a>
+            <a href="#compare" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              {t('advisorVsAgents', 'Advisor vs Agents')}
+            </a>
+            <a href="#faq" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              {t('faqs', 'FAQs')}
+            </a>
+          </nav>
+
+          {/* Nav Actions */}
           <div className="flex items-center gap-2 md:gap-3">
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Toggle theme"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
             <LocaleSwitcher />
+
             <Link href="/signin">
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900">
                 {tCommon('signIn', 'Sign In')}
               </Button>
             </Link>
+
             <Link href="/signup">
               <Button variant="outline" size="sm" className="hidden sm:inline-flex font-bold border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
                 Sign Up
               </Button>
             </Link>
+
             <Link href="/dashboard">
               <Button variant="gradient" size="sm" className="gap-2 shadow-md font-bold">
                 <span className="hidden sm:inline">{tCommon('dashboard', 'Dashboard')}</span>
@@ -332,16 +393,40 @@ export default function LandingPage() {
                 <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
               </Button>
             </Link>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* ── Mobile Navigation Drawer ───────────────────────────────────────── */}
+      <MobileNavDrawer
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
+      />
+
+      {/* ── Destination Details Modal ─────────────────────────────────────── */}
+      <DestinationModal
+        country={selectedDestination}
+        onClose={() => setSelectedDestination(null)}
+      />
 
       {/* ── Hero Section ──────────────────────────────────────────────────── */}
       <section className="relative z-10 pt-36 pb-20 md:pt-44 md:pb-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-20">
 
-            {/* Left: Text */}
+            {/* Left: Text & Interactive Prompt */}
             <div className="flex-1 text-center lg:text-left">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50/90 px-4 py-1.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-sm mb-6 animate-fade-in">
@@ -364,24 +449,14 @@ export default function LandingPage() {
                 )}
               </p>
 
-              {/* CTA Buttons */}
-              <div className="mt-10 flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4 animate-fade-in">
-                <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button size="lg" variant="gradient" className="w-full gap-2 shadow-xl shadow-emerald-600/20 font-bold text-base px-8">
-                    <Zap className="h-5 w-5" />
-                    <span>{t('ctaStart', 'Start Free Consultation')}</span>
-                  </Button>
-                </Link>
-                <Link href="/signup" className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="w-full font-bold border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors text-base px-8">
-                    Create Free Account
-                  </Button>
-                </Link>
+              {/* Interactive Prompt Launcher */}
+              <div className="animate-fade-in">
+                <HeroPromptLauncher />
               </div>
 
               {/* Trust signals */}
               <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400 animate-fade-in">
-                {['No sign-up required', 'Completely free', '100% Bilingual (EN/UR)'].map((t, i) => (
+                {['No sign-up required', 'Completely free forever', '100% Bilingual (EN/UR)'].map((t, i) => (
                   <span key={i} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                     {t}
@@ -417,32 +492,40 @@ export default function LandingPage() {
       <StatsRibbon />
 
       {/* ── Destinations Strip ────────────────────────────────────────────── */}
-      <section className="relative z-10 py-12 overflow-hidden">
+      <section id="destinations" className="relative z-10 py-16 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 reveal">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-              Recommended Destinations
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
+              Interactive Country Explorer
             </p>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
               Top Study Destinations for Pakistani Students
             </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Click any country to explore tuition, blocked account requirements, and post-study work visas.
+            </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2.5 reveal reveal-delay-1">
             {destinations.map((d, i) => (
-              <div
+              <button
                 key={i}
-                className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-default"
+                type="button"
+                onClick={() => setSelectedDestination(d.name)}
+                className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <span className="text-lg">{d.flag}</span>
                 <span>{d.name}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ── Interactive PKR Cost Calculator ───────────────────────────────── */}
+      <PkrCostCalculator />
+
       {/* ── How It Works ──────────────────────────────────────────────────── */}
-      <section className="relative z-10 py-20 md:py-28">
+      <section id="how-it-works" className="relative z-10 py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-16 reveal">
@@ -475,7 +558,7 @@ export default function LandingPage() {
                     </div>
                     {/* Icon */}
                     <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${step.bg} mb-6 group-hover:scale-110 transition-transform`}>
-                      <Icon className={`h-7 w-7 bg-gradient-to-br ${step.color} bg-clip-text`} style={{ color: 'transparent', backgroundImage: `linear-gradient(135deg, var(--tw-gradient-stops))` }} />
+                      <Icon className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{step.title}</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{step.desc}</p>
@@ -493,13 +576,15 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Advisor vs Traditional Agents Comparison ─────────────────────── */}
+      <ComparisonTable />
+
       {/* ── Features Grid ─────────────────────────────────────────────────── */}
-      <section className="relative z-10 py-20 md:py-28 bg-slate-50/80 dark:bg-slate-900/40">
+      <section id="features" className="relative z-10 py-20 md:py-28 bg-slate-50/80 dark:bg-slate-900/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16 reveal">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3">
-              Features
+              Platform Features
             </p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               {t('featuresTitle', 'Why Pakistani Students Choose Study Abroad Advisor')}
@@ -534,6 +619,12 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Student Testimonials ──────────────────────────────────────────── */}
+      <TestimonialsSection />
+
+      {/* ── FAQ Section ───────────────────────────────────────────────────── */}
+      <FaqSection />
 
       {/* ── CTA Banner ────────────────────────────────────────────────────── */}
       <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
@@ -606,15 +697,16 @@ export default function LandingPage() {
               <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Product</p>
               <ul className="space-y-2.5">
                 {[
+                  { label: 'PKR Cost Calculator', href: '#calculator' },
+                  { label: 'Destination Explorer', href: '#destinations' },
+                  { label: 'Advisor vs Agents', href: '#compare' },
                   { label: 'Dashboard', href: '/dashboard' },
                   { label: 'Compare Universities', href: '/compare' },
-                  { label: 'Saved Consultations', href: '/my-saved' },
-                  { label: 'Settings', href: '/settings' },
                 ].map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
+                    <a href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
                       {l.label}
-                    </Link>
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -625,15 +717,16 @@ export default function LandingPage() {
               <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Resources</p>
               <ul className="space-y-2.5">
                 {[
+                  { label: 'Frequently Asked Questions', href: '#faq' },
                   { label: 'Sign In', href: '/signin' },
                   { label: 'Create Account', href: '/signup' },
                   { label: 'Forgot Password', href: '/forgot-password' },
                   { label: 'GitHub Repository', href: 'https://github.com/AbdulAzeemHashmi/study-abroad-advisor' },
                 ].map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
+                    <a href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
                       {l.label}
-                    </Link>
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -643,9 +736,22 @@ export default function LandingPage() {
             <div>
               <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Top Destinations</p>
               <ul className="space-y-2.5">
-                {['🇩🇪 Germany', '🇬🇧 United Kingdom', '🇨🇦 Canada', '🇦🇺 Australia', '🇺🇸 USA', '🇮🇹 Italy'].map((d) => (
-                  <li key={d}>
-                    <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{d}</span>
+                {[
+                  { label: '🇩🇪 Germany (Free Tuition)', country: 'Germany' },
+                  { label: '🇮🇹 Italy (DSU Stipend)', country: 'Italy' },
+                  { label: '🇬🇧 United Kingdom', country: 'United Kingdom' },
+                  { label: '🇨🇦 Canada', country: 'Canada' },
+                  { label: '🇺🇸 USA (STEM OPT)', country: 'USA' },
+                  { label: '🇦🇺 Australia', country: 'Australia' },
+                ].map((d) => (
+                  <li key={d.country}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDestination(d.country)}
+                      className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors text-left"
+                    >
+                      {d.label}
+                    </button>
                   </li>
                 ))}
               </ul>

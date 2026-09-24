@@ -60,7 +60,12 @@
     "ctaBannerTitle": "Ready to Plan Your Foreign Education?",
     "ctaBannerSubtitle": "Ask your first question now. Free, instant, and customized for Pakistani degrees.",
     "footerNotice": "Open source & free for Pakistani students worldwide.",
-    "githubRepo": "GitHub Repository"
+    "githubRepo": "GitHub Repository",
+    "pkrCalculator": "PKR Calculator",
+    "destinations": "Top Destinations",
+    "howItWorks": "How It Works",
+    "advisorVsAgents": "Advisor vs Agents",
+    "faqs": "FAQs"
   },
   "auth": {
     "loginTitle": "Welcome Back",
