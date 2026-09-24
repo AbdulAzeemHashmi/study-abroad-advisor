@@ -56,51 +56,48 @@ function useScrollReveal() {
   }, []);
 }
 
-// ─── Count-Up Hook ────────────────────────────────────────────────────────────
-function useCountUp(target: number, duration = 1800, start = false) {
-  const [count, setCount] = useState(0);
+// ─── Count-Up Hook (Starts immediately, never stuck at 0) ─────────────────────
+function useCountUp(target: number, duration = 1600) {
+  const [count, setCount] = useState(target);
+
   useEffect(() => {
-    if (!start) return;
     let startTime: number | null = null;
+    let animId: number;
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
+      if (progress < 1) {
+        animId = requestAnimationFrame(step);
+      }
     };
-    requestAnimationFrame(step);
-  }, [target, duration, start]);
+    animId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animId);
+  }, [target, duration]);
+
   return count;
 }
 
 // ─── Stats Ribbon ─────────────────────────────────────────────────────────────
 function StatsRibbon() {
-  const [started, setStarted] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { locale } = useI18n();
+  const t = useTranslations('landing');
+  const isUr = locale === 'ur';
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setStarted(true); },
-      { threshold: 0.3 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const unis = useCountUp(500, 1600, started);
-  const countries = useCountUp(30, 1200, started);
-  const students = useCountUp(1000, 2000, started);
+  const unis = useCountUp(500, 1600);
+  const countries = useCountUp(30, 1200);
+  const students = useCountUp(1000, 2000);
 
   const stats = [
-    { value: '$0',         label: 'Cost to Use',                    color: 'text-emerald-500' },
-    { value: `${unis}+`,  label: 'Verified Global Universities',   color: 'text-blue-500' },
-    { value: `${countries}+`, label: 'Study Destinations',         color: 'text-violet-500' },
-    { value: `${students}+`,  label: 'Students Guided',            color: 'text-amber-500' },
+    { value: isUr ? '0 روپے' : '$0', label: t('statCost', 'Cost to Use'), color: 'text-emerald-500' },
+    { value: `${unis}+`, label: t('statUnis', 'Verified Global Universities'), color: 'text-blue-500' },
+    { value: `${countries}+`, label: t('statDestinations', 'Study Destinations'), color: 'text-violet-500' },
+    { value: `${students}+`, label: t('statStudents', 'Students Guided'), color: 'text-amber-500' },
   ];
 
   return (
-    <div ref={ref} className="relative z-10 border-y border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-10 shadow-sm">
+    <div className="relative z-10 border-y border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-10 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {stats.map((s, i) => (
@@ -119,89 +116,29 @@ function StatsRibbon() {
 
 // ─── Destinations Strip List ──────────────────────────────────────────────────
 const destinations = [
-  { flag: '🇩🇪', name: 'Germany' },
-  { flag: '🇬🇧', name: 'United Kingdom' },
-  { flag: '🇺🇸', name: 'USA' },
-  { flag: '🇨🇦', name: 'Canada' },
-  { flag: '🇦🇺', name: 'Australia' },
-  { flag: '🇮🇹', name: 'Italy' },
-  { flag: '🇳🇴', name: 'Norway' },
-  { flag: '🇸🇪', name: 'Sweden' },
-  { flag: '🇳🇱', name: 'Netherlands' },
-  { flag: '🇹🇷', name: 'Turkey' },
-  { flag: '🇲🇾', name: 'Malaysia' },
-  { flag: '🇰🇷', name: 'South Korea' },
-  { flag: '🇯🇵', name: 'Japan' },
-  { flag: '🇫🇷', name: 'France' },
-  { flag: '🇨🇿', name: 'Czech Republic' },
-];
-
-// ─── How It Works steps ───────────────────────────────────────────────────────
-const steps = [
-  {
-    icon: MessageSquare,
-    number: '01',
-    title: 'Describe Your Profile',
-    desc: 'Tell the AI your degree level, budget, CGPA, and study field in English or Urdu.',
-    color: 'from-emerald-500 to-teal-500',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
-  },
-  {
-    icon: Search,
-    number: '02',
-    title: 'AI Searches & Filters',
-    desc: 'Our RAG engine searches 500+ verified universities, calculates PKR costs, and excludes non-viable regions.',
-    color: 'from-blue-500 to-indigo-500',
-    bg: 'bg-blue-50 dark:bg-blue-950/40',
-  },
-  {
-    icon: FileText,
-    number: '03',
-    title: 'Get Your Personalized Report',
-    desc: 'Receive ranked recommendations with tuition in PKR, PR pathways, scholarship tips, and visa guides.',
-    color: 'from-violet-500 to-purple-500',
-    bg: 'bg-violet-50 dark:bg-violet-950/40',
-  },
-];
-
-// ─── Feature cards ────────────────────────────────────────────────────────────
-const features = [
-  {
-    icon: Award,
-    title: 'Low-Cost & Scholarships',
-    desc: 'Discover tuition-free options in Germany, Italy, and low-cost Nordic universities with DAAD, Chevening, and Fulbright guidance.',
-    gradient: 'from-emerald-500 to-teal-500',
-    glow: 'hover:shadow-emerald-500/10',
-    border: 'hover:border-emerald-400',
-  },
-  {
-    icon: DollarSign,
-    title: 'PKR Currency Realities',
-    desc: 'Real-time conversion of tuition and block account costs into PKR with realistic part-time work viability.',
-    gradient: 'from-amber-500 to-orange-500',
-    glow: 'hover:shadow-amber-500/10',
-    border: 'hover:border-amber-400',
-  },
-  {
-    icon: Briefcase,
-    title: 'Work & PR Pathways',
-    desc: 'Clear breakdown of post-graduation work visas (PSW), permanent residency points, and immigration regulations.',
-    gradient: 'from-blue-500 to-indigo-500',
-    glow: 'hover:shadow-blue-500/10',
-    border: 'hover:border-blue-400',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Multi-Provider Failover',
-    desc: 'Powered by Gemini → Grok → Llama failover pipeline ensuring 100% uptime with zero service interruptions.',
-    gradient: 'from-violet-500 to-purple-500',
-    glow: 'hover:shadow-violet-500/10',
-    border: 'hover:border-violet-400',
-  },
+  { flag: '🇩🇪', name: 'Germany', nameUr: 'جرمنی' },
+  { flag: '🇬🇧', name: 'United Kingdom', nameUr: 'برطانیہ' },
+  { flag: '🇺🇸', name: 'USA', nameUr: 'امریکہ' },
+  { flag: '🇨🇦', name: 'Canada', nameUr: 'کینیڈا' },
+  { flag: '🇦🇺', name: 'Australia', nameUr: 'آسٹریلیا' },
+  { flag: '🇮🇹', name: 'Italy', nameUr: 'اٹلی' },
+  { flag: '🇳🇴', name: 'Norway', nameUr: 'ناروے' },
+  { flag: '🇸🇪', name: 'Sweden', nameUr: 'سویڈن' },
+  { flag: '🇳🇱', name: 'Netherlands', nameUr: 'نیدرلینڈز' },
+  { flag: '🇹🇷', name: 'Turkey', nameUr: 'ترکی' },
+  { flag: '🇲🇾', name: 'Malaysia', nameUr: 'ملائیشیا' },
+  { flag: '🇰🇷', name: 'South Korea', nameUr: 'جنوبی کوریا' },
+  { flag: '🇯🇵', name: 'Japan', nameUr: 'جاپان' },
+  { flag: '🇫🇷', name: 'France', nameUr: 'فرانس' },
+  { flag: '🇨🇿', name: 'Czech Republic', nameUr: 'چیک جمہوریہ' },
 ];
 
 // ─── AI Mock Chat Card ────────────────────────────────────────────────────────
 function HeroChatCard() {
+  const { locale } = useI18n();
+  const t = useTranslations('landing');
+  const isUr = locale === 'ur';
+
   return (
     <div className="glass-card rounded-3xl shadow-2xl shadow-emerald-500/10 p-5 w-full max-w-sm animate-float border border-white/50 dark:border-slate-700/50">
       {/* Header */}
@@ -210,10 +147,12 @@ function HeroChatCard() {
           <GraduationCap className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-xs font-bold text-slate-900 dark:text-white">Study Abroad AI</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-white">
+            {t('chatTitle', 'Study Abroad AI')}
+          </p>
           <p className="text-[10px] text-emerald-500 flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-            Online · Powered by Gemini
+            {t('chatOnline', 'Online · Powered by Gemini')}
           </p>
         </div>
       </div>
@@ -221,7 +160,7 @@ function HeroChatCard() {
       {/* User message */}
       <div className="flex justify-end mb-3">
         <div className="bg-emerald-500 text-white rounded-2xl rounded-br-sm px-3.5 py-2.5 text-xs max-w-[85%] leading-relaxed shadow-sm">
-          I want to do MS Computer Science in Germany. Budget is ₨50 lakh. Is it possible?
+          {t('chatUserMsg', 'I want to do MS Computer Science in Germany. Budget is ₨50 lakh. Is it possible?')}
         </div>
       </div>
 
@@ -231,15 +170,15 @@ function HeroChatCard() {
           <Sparkles className="h-3 w-3" />
         </div>
         <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-[11px] text-slate-700 dark:text-slate-200 max-w-[90%] leading-relaxed">
-          <strong className="text-emerald-600 dark:text-emerald-400">Absolutely! Great news.</strong> Germany offers <strong>tuition-free MS programs</strong> at public universities. ₨50 lakh covers the required Sperrkonto (€11,208/yr blocked account) with room to spare for flights & visa.
+          {t('chatAiMsg', 'Absolutely! Great news. Germany offers tuition-free MS programs at public universities. ₨50 lakh covers the required Sperrkonto (€11,208/yr blocked account) with room to spare for flights & visa.')}
         </div>
       </div>
 
       {/* Recommendation chips */}
       <div className="mt-3 space-y-1.5">
         {[
-          { uni: 'TU Munich', field: 'Informatics', cost: 'Free tuition' },
-          { uni: 'KIT Karlsruhe', field: 'CS / AI', cost: 'Free tuition' },
+          { uni: 'TU Munich', field: isUr ? 'انفارمیٹکس' : 'Informatics', cost: t('chatFreeTuition', 'Free tuition') },
+          { uni: 'KIT Karlsruhe', field: isUr ? 'سی ایس / اے آئی' : 'CS / AI', cost: t('chatFreeTuition', 'Free tuition') },
         ].map((r, i) => (
           <div key={i} className="flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 px-3 py-2">
             <div>
@@ -264,7 +203,7 @@ function HeroChatCard() {
             />
           ))}
         </div>
-        <span>AI is ready for your query…</span>
+        <span>{t('chatReady', 'AI is ready for your query…')}</span>
       </div>
     </div>
   );
@@ -274,7 +213,8 @@ function HeroChatCard() {
 export default function LandingPage() {
   const t = useTranslations('landing');
   const tCommon = useTranslations('common');
-  const { dir } = useI18n();
+  const { locale, dir } = useI18n();
+  const isUr = locale === 'ur';
 
   const [scrolled, setScrolled] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
@@ -306,6 +246,68 @@ export default function LandingPage() {
       localStorage.setItem('theme', 'light');
     }
   };
+
+  const steps = [
+    {
+      icon: MessageSquare,
+      number: '01',
+      title: t('step1Title', 'Describe Your Profile'),
+      desc: t('step1Desc', 'Tell the AI your degree level, budget, CGPA, and study field in English or Urdu.'),
+      color: 'from-emerald-500 to-teal-500',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+    },
+    {
+      icon: Search,
+      number: '02',
+      title: t('step2Title', 'AI Searches & Filters'),
+      desc: t('step2Desc', 'Our RAG engine searches 500+ verified universities, calculates PKR costs, and excludes non-viable regions.'),
+      color: 'from-blue-500 to-indigo-500',
+      bg: 'bg-blue-50 dark:bg-blue-950/40',
+    },
+    {
+      icon: FileText,
+      number: '03',
+      title: t('step3Title', 'Get Your Personalized Report'),
+      desc: t('step3Desc', 'Receive ranked recommendations with tuition in PKR, PR pathways, scholarship tips, and visa guides.'),
+      color: 'from-violet-500 to-purple-500',
+      bg: 'bg-violet-50 dark:bg-violet-950/40',
+    },
+  ];
+
+  const features = [
+    {
+      icon: Award,
+      title: t('feature1Title', 'Low-Cost & Scholarships'),
+      desc: t('feature1Desc', 'Discover tuition-free options in Germany, Italy, and low-cost Nordic universities with DAAD, Chevening, and Fulbright guidance.'),
+      gradient: 'from-emerald-500 to-teal-500',
+      glow: 'hover:shadow-emerald-500/10',
+      border: 'hover:border-emerald-400',
+    },
+    {
+      icon: DollarSign,
+      title: t('feature2Title', 'PKR Currency Realities'),
+      desc: t('feature2Desc', 'Real-time conversion of tuition and block account costs into PKR with realistic part-time work viability.'),
+      gradient: 'from-amber-500 to-orange-500',
+      glow: 'hover:shadow-amber-500/10',
+      border: 'hover:border-amber-400',
+    },
+    {
+      icon: Briefcase,
+      title: t('feature3Title', 'Work & PR Pathways'),
+      desc: t('feature3Desc', 'Clear breakdown of post-graduation work visas (PSW), permanent residency points, and immigration regulations.'),
+      gradient: 'from-blue-500 to-indigo-500',
+      glow: 'hover:shadow-blue-500/10',
+      border: 'hover:border-blue-400',
+    },
+    {
+      icon: ShieldCheck,
+      title: t('feature4Title', 'Multi-Provider Failover'),
+      desc: t('feature4Desc', 'Powered by Gemini → Grok → Llama failover pipeline ensuring 100% uptime with zero service interruptions.'),
+      gradient: 'from-violet-500 to-purple-500',
+      glow: 'hover:shadow-violet-500/10',
+      border: 'hover:border-violet-400',
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white selection:bg-emerald-500 selection:text-white overflow-x-hidden">
@@ -366,7 +368,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Toggle theme"
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -381,15 +383,15 @@ export default function LandingPage() {
             </Link>
 
             <Link href="/signup">
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex font-bold border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
-                Sign Up
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex font-bold border-emerald-400 dark:border-emerald-600 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
+                {tCommon('signUp', 'Sign Up')}
               </Button>
             </Link>
 
             <Link href="/dashboard">
               <Button variant="gradient" size="sm" className="gap-2 shadow-md font-bold">
                 <span className="hidden sm:inline">{tCommon('dashboard', 'Dashboard')}</span>
-                <span className="sm:hidden">Start</span>
+                <span className="sm:hidden">{isUr ? 'شروع' : 'Start'}</span>
                 <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
               </Button>
             </Link>
@@ -398,7 +400,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer"
               aria-label="Open navigation menu"
             >
               <Menu className="h-5 w-5" />
@@ -435,17 +437,17 @@ export default function LandingPage() {
               </div>
 
               {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] max-w-2xl mx-auto lg:mx-0 animate-fade-in">
-                Find Your{' '}
-                <span className="gradient-text">Ideal Global University</span>{' '}
-                with Intelligent AI
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] max-w-2xl mx-auto lg:mx-0 animate-fade-in">
+                {t('heroHeadlinePart1', 'Find Your')}{' '}
+                <span className="gradient-text">{t('heroHeadlineHighlight', 'Ideal Global University')}</span>{' '}
+                {t('heroHeadlinePart2', 'with Intelligent AI')}
               </h1>
 
               {/* Sub */}
               <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium animate-fade-in">
                 {t(
                   'heroSubtitle',
-                  'Up-to-date rankings, realistic tuition & living costs in PKR, and settlement pathways tailored to your budget and academic profile.'
+                  'Up-to-date university rankings, realistic tuition & living costs in PKR, and settlement pathways tailored to your budget and academic profile.'
                 )}
               </p>
 
@@ -456,10 +458,14 @@ export default function LandingPage() {
 
               {/* Trust signals */}
               <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400 animate-fade-in">
-                {['No sign-up required', 'Completely free forever', '100% Bilingual (EN/UR)'].map((t, i) => (
+                {[
+                  t('trustNoSignup', 'No sign-up required'),
+                  t('trustCompletelyFree', 'Completely free forever'),
+                  t('trustBilingual', '100% Bilingual (EN/UR)'),
+                ].map((text, i) => (
                   <span key={i} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    {t}
+                    {text}
                   </span>
                 ))}
               </div>
@@ -474,7 +480,7 @@ export default function LandingPage() {
                     {t('excludedBadge', 'Strict Quality Destination Filter Active')}
                   </span>
                   <span className="leading-relaxed text-slate-600 dark:text-slate-400">
-                    Only top, viable destinations (Germany, UK, USA, Canada, Australia, Turkey, Malaysia…) — non-viable regions strictly excluded.
+                    {t('excludedDesc', 'Only top, viable destinations (Germany, UK, USA, Canada, Australia, Turkey, Malaysia…) — non-viable regions strictly excluded.')}
                   </span>
                 </div>
               </div>
@@ -496,13 +502,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
-              Interactive Country Explorer
+              {t('countryExplorerBadge', 'Interactive Country Explorer')}
             </p>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              Top Study Destinations for Pakistani Students
+              {t('countryExplorerTitle', 'Top Study Destinations for Pakistani Students')}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Click any country to explore tuition, blocked account requirements, and post-study work visas.
+              {t('countryExplorerSubtitle', 'Click any country to explore tuition, blocked account requirements, and post-study work visas.')}
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2.5 reveal reveal-delay-1">
@@ -514,7 +520,7 @@ export default function LandingPage() {
                 className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <span className="text-lg">{d.flag}</span>
-                <span>{d.name}</span>
+                <span>{isUr ? d.nameUr : d.name}</span>
               </button>
             ))}
           </div>
@@ -530,14 +536,14 @@ export default function LandingPage() {
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-16 reveal">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3">
-              How It Works
+              {t('howItWorksBadge', 'How It Works')}
             </p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-              From Question to Report in{' '}
-              <span className="gradient-text">Seconds</span>
+              {t('howItWorksTitle', 'From Question to Report in')}{' '}
+              <span className="gradient-text">{t('howItWorksHighlight', 'Seconds')}</span>
             </h2>
             <p className="mt-4 text-base text-slate-500 dark:text-slate-400 font-medium">
-              No sign-up needed. Just ask your question and get a detailed, personalized recommendation.
+              {t('howItWorksSubtitle', 'No sign-up needed. Just ask your question and get a detailed, personalized recommendation.')}
             </p>
           </div>
 
@@ -565,7 +571,7 @@ export default function LandingPage() {
 
                     {i < steps.length - 1 && (
                       <div className="hidden md:block absolute top-10 -right-4 z-10">
-                        <ChevronRight className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                        <ChevronRight className={`h-6 w-6 text-slate-300 dark:text-slate-600 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
                       </div>
                     )}
                   </div>
@@ -584,7 +590,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 reveal">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3">
-              Platform Features
+              {t('featuresBadge', 'Platform Features')}
             </p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               {t('featuresTitle', 'Why Pakistani Students Choose Study Abroad Advisor')}
@@ -610,7 +616,7 @@ export default function LandingPage() {
                   <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed flex-1">{f.desc}</p>
                   <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      <TrendingUp className="h-3.5 w-3.5" /> Built-in & Free
+                      <TrendingUp className="h-3.5 w-3.5" /> {t('builtInAndFree', 'Built-in & Free')}
                     </span>
                   </div>
                 </div>
@@ -639,7 +645,7 @@ export default function LandingPage() {
             {/* Social proof */}
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-1.5 text-xs font-bold text-emerald-300 mb-8">
               <Users className="h-3.5 w-3.5" />
-              Join 1,000+ Pakistani students who have already started their journey
+              {t('socialProofStudents', 'Join 1,000+ Pakistani students who have already started their journey')}
             </div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
@@ -650,15 +656,19 @@ export default function LandingPage() {
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold shadow-lg shadow-emerald-500/25 gap-2 text-base px-10 border-0">
+                <Button size="lg" className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold shadow-lg shadow-emerald-500/25 gap-2 text-base px-10 border-0 cursor-pointer">
                   <Zap className="h-5 w-5" />
-                  {t('ctaStart', 'Start Free Consultation')}
+                  {t('startFreeConsultation', 'Start Free Consultation')}
                 </Button>
               </Link>
+              {/* FIXED CONTRAST: Solid white button with dark slate text so it is 100% visible in both light & dark mode */}
               <Link href="/signup" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 font-bold text-base px-10">
-                  Create Free Account
-                </Button>
+                <button
+                  type="button"
+                  className="w-full sm:w-auto h-12 px-8 rounded-xl font-extrabold text-base bg-white text-slate-900 hover:bg-slate-100 shadow-xl transition-all cursor-pointer border-2 border-white"
+                >
+                  {t('createFreeAccount', 'Create Free Account')}
+                </button>
               </Link>
             </div>
           </div>
@@ -676,17 +686,23 @@ export default function LandingPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md">
                   <GraduationCap className="h-5 w-5" />
                 </div>
-                <span className="font-black text-slate-900 dark:text-white text-base">Study Abroad Advisor</span>
+                <span className="font-black text-slate-900 dark:text-white text-base">
+                  {tCommon('appName', 'Study Abroad Advisor')}
+                </span>
               </Link>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-                AI-powered platform helping Pakistani students navigate foreign university admissions. Free. Always.
+                {t('footerTagline', 'AI-powered platform helping Pakistani students navigate foreign university admissions. Free. Always.')}
               </p>
               <div className="flex gap-3">
                 <a href="https://github.com/AbdulAzeemHashmi/study-abroad-advisor" target="_blank" rel="noopener noreferrer"
-                   className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                   className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                   title="GitHub"
+                >
                   <Github className="h-4 w-4" />
                 </a>
-                <a href="#" className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                <a href="#" className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                   title="Website"
+                >
                   <Globe className="h-4 w-4" />
                 </a>
               </div>
@@ -694,14 +710,16 @@ export default function LandingPage() {
 
             {/* Product links */}
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Product</p>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                {t('product', 'Product')}
+              </p>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'PKR Cost Calculator', href: '#calculator' },
-                  { label: 'Destination Explorer', href: '#destinations' },
-                  { label: 'Advisor vs Agents', href: '#compare' },
-                  { label: 'Dashboard', href: '/dashboard' },
-                  { label: 'Compare Universities', href: '/compare' },
+                  { label: t('pkrCalculator', 'PKR Cost Calculator'), href: '#calculator' },
+                  { label: t('destinations', 'Destination Explorer'), href: '#destinations' },
+                  { label: t('advisorVsAgents', 'Advisor vs Agents'), href: '#compare' },
+                  { label: tCommon('dashboard', 'Dashboard'), href: '/dashboard' },
+                  { label: tCommon('compare', 'Compare Universities'), href: '/compare' },
                 ].map((l) => (
                   <li key={l.href}>
                     <a href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
@@ -714,19 +732,20 @@ export default function LandingPage() {
 
             {/* Resources */}
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Resources</p>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                {t('resources', 'Resources')}
+              </p>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'Frequently Asked Questions', href: '#faq' },
-                  { label: 'Sign In', href: '/signin' },
-                  { label: 'Create Account', href: '/signup' },
-                  { label: 'Forgot Password', href: '/forgot-password' },
-                  { label: 'GitHub Repository', href: 'https://github.com/AbdulAzeemHashmi/study-abroad-advisor' },
+                  { label: t('faqs', 'Frequently Asked Questions'), href: '#faq' },
+                  { label: tCommon('signIn', 'Sign In'), href: '/signin' },
+                  { label: tCommon('signUp', 'Create Account'), href: '/signup' },
+                  { label: t('githubRepo', 'GitHub Repository'), href: 'https://github.com/AbdulAzeemHashmi/study-abroad-advisor' },
                 ].map((l) => (
                   <li key={l.href}>
-                    <a href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
+                    <Link href={l.href} className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
                       {l.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -734,21 +753,23 @@ export default function LandingPage() {
 
             {/* Destinations */}
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Top Destinations</p>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                {t('topDestinations', 'Top Destinations')}
+              </p>
               <ul className="space-y-2.5">
                 {[
-                  { label: '🇩🇪 Germany (Free Tuition)', country: 'Germany' },
-                  { label: '🇮🇹 Italy (DSU Stipend)', country: 'Italy' },
-                  { label: '🇬🇧 United Kingdom', country: 'United Kingdom' },
-                  { label: '🇨🇦 Canada', country: 'Canada' },
-                  { label: '🇺🇸 USA (STEM OPT)', country: 'USA' },
-                  { label: '🇦🇺 Australia', country: 'Australia' },
+                  { label: isUr ? '🇩🇪 جرمنی (مفت تعلیم)' : '🇩🇪 Germany (Free Tuition)', country: 'Germany' },
+                  { label: isUr ? '🇮🇹 اٹلی (DSU اسکالرشپ)' : '🇮🇹 Italy (DSU Stipend)', country: 'Italy' },
+                  { label: isUr ? '🇬🇧 برطانیہ' : '🇬🇧 United Kingdom', country: 'United Kingdom' },
+                  { label: isUr ? '🇨🇦 کینیڈا' : '🇨🇦 Canada', country: 'Canada' },
+                  { label: isUr ? '🇺🇸 امریکہ (STEM OPT)' : '🇺🇸 USA (STEM OPT)', country: 'USA' },
+                  { label: isUr ? '🇦🇺 آسٹریلیا' : '🇦🇺 Australia', country: 'Australia' },
                 ].map((d) => (
                   <li key={d.country}>
                     <button
                       type="button"
                       onClick={() => setSelectedDestination(d.country)}
-                      className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors text-left"
+                      className="text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors text-left cursor-pointer"
                     >
                       {d.label}
                     </button>
@@ -761,12 +782,12 @@ export default function LandingPage() {
           {/* Bottom bar */}
           <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-500">
             <div>
-              © {new Date().getFullYear()} Study Abroad Advisor.{' '}
-              <span className="text-slate-400">Open source & free for Pakistani students worldwide.</span>
+              © {new Date().getFullYear()} {tCommon('appName', 'Study Abroad Advisor')}.{' '}
+              <span className="text-slate-400">{t('footerNotice', 'Open source & free for Pakistani students worldwide.')}</span>
             </div>
             <div className="flex items-center gap-1.5 font-semibold">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              All AI systems operational
+              {t('footerAllSystemsOperational', 'All AI systems operational')}
             </div>
           </div>
         </div>

@@ -15,7 +15,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       default:
         'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 border border-emerald-500/30',
       outline:
-        'border-2 border-slate-300 bg-white hover:bg-slate-100 hover:border-slate-400 text-slate-850 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-100 shadow-sm',
+        'border-2 border-slate-300 bg-white hover:bg-slate-100 hover:border-slate-400 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-100 shadow-sm',
       secondary:
         'bg-slate-800 text-white hover:bg-slate-900 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600 shadow-sm border border-slate-700',
       ghost:

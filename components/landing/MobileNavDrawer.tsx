@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { X, GraduationCap, Sun, Moon, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
+import { useI18n, useTranslations } from '@/lib/i18n';
 
 interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -19,19 +20,24 @@ export default function MobileNavDrawer({
   isDark,
   onToggleTheme,
 }: MobileNavDrawerProps) {
+  const { locale, dir } = useI18n();
+  const t = useTranslations('landing');
+  const tCommon = useTranslations('common');
+  const isUr = locale === 'ur';
+
   if (!isOpen) return null;
 
   const navLinks = [
-    { label: 'PKR Calculator', href: '#calculator' },
-    { label: 'Top Destinations', href: '#destinations' },
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Advisor vs Agents', href: '#compare' },
-    { label: 'Key Features', href: '#features' },
-    { label: 'FAQs', href: '#faq' },
+    { label: t('pkrCalculator', 'PKR Calculator'), href: '#calculator' },
+    { label: t('destinations', 'Top Destinations'), href: '#destinations' },
+    { label: t('howItWorks', 'How It Works'), href: '#how-it-works' },
+    { label: t('advisorVsAgents', 'Advisor vs Agents'), href: '#compare' },
+    { label: isUr ? 'خصوصیات' : 'Key Features', href: '#features' },
+    { label: t('faqs', 'FAQs'), href: '#faq' },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-950 p-6 animate-fade-in md:hidden">
+    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-950 p-6 animate-fade-in lg:hidden">
       {/* Header */}
       <div className="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2.5">
@@ -39,13 +45,13 @@ export default function MobileNavDrawer({
             <GraduationCap className="h-5 w-5" />
           </div>
           <span className="font-black text-slate-900 dark:text-white text-base">
-            Study Abroad Advisor
+            {tCommon('appName', 'Study Abroad Advisor')}
           </span>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
@@ -69,13 +75,14 @@ export default function MobileNavDrawer({
       <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Preferences:
+            {isUr ? 'ترجیحات:' : 'Preferences:'}
           </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onToggleTheme}
-              className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+              className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer"
+              title="Toggle theme"
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
@@ -86,20 +93,20 @@ export default function MobileNavDrawer({
         <div className="grid grid-cols-2 gap-3">
           <Link href="/signin" onClick={onClose} className="w-full">
             <Button variant="outline" className="w-full font-bold">
-              Sign In
+              {tCommon('signIn', 'Sign In')}
             </Button>
           </Link>
           <Link href="/signup" onClick={onClose} className="w-full">
             <Button variant="outline" className="w-full font-bold border-emerald-400 text-emerald-600 dark:text-emerald-400">
-              Sign Up
+              {tCommon('signUp', 'Sign Up')}
             </Button>
           </Link>
         </div>
 
         <Link href="/dashboard" onClick={onClose} className="block w-full">
           <Button variant="gradient" className="w-full font-extrabold gap-2 shadow-md">
-            <span>Launch AI Advisor</span>
-            <ArrowRight className="h-4 w-4" />
+            <span>{isUr ? 'اے آئی مشیر شروع کریں' : 'Launch AI Advisor'}</span>
+            <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
           </Button>
         </Link>
       </div>
