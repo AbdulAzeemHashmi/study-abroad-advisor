@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,27 @@ import { useTranslations, useI18n } from '@/lib/i18n';
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [googleOAuthNotice, setGoogleOAuthNotice] = useState(false);
+
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
   const { dir } = useI18n();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      if (errorParam === 'OAuthCallback' || errorParam === 'redirect_uri_mismatch' || errorParam === 'Configuration') {
+        setGoogleOAuthNotice(true);
+      } else {
+        setError(errorParam);
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +48,13 @@ export default function SignInPage() {
       });
 
       if (res?.error) {
-        setError(res.error || 'Invalid email or password.');
+        setError(res.error);
       } else {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Authentication error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -50,9 +65,9 @@ export default function SignInPage() {
   };
 
   return (
-    <Card className="border-slate-200/80 shadow-xl dark:border-slate-800 animate-fade-in">
+    <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl animate-fade-in bg-white dark:bg-slate-900">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold">
+        <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
           {t('loginTitle', 'Welcome Back')}
         </CardTitle>
         <CardDescription>
@@ -61,8 +76,25 @@ export default function SignInPage() {
       </CardHeader>
 
       <CardContent>
+        {/* Google OAuth Redirect URI notice */}
+        {googleOAuthNotice && (
+          <div className="mb-4 rounded-xl border-2 border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-200 shadow-sm leading-relaxed">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <div>
+                <span className="font-bold block mb-1">
+                  Google OAuth Redirect URI Configuration:
+                </span>
+                <span>
+                  Please add <code className="bg-amber-200/70 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">http://localhost:3000/api/auth/callback/google</code> to your <strong>Authorized Redirect URIs</strong> in Google Cloud Console.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 shadow-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -80,6 +112,7 @@ export default function SignInPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              className="text-slate-900 dark:text-white"
             />
           </div>
 
@@ -90,22 +123,32 @@ export default function SignInPage() {
               </label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:underline"
+                className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:underline font-semibold"
               >
                 {t('forgotPassword', 'Forgot Password?')}
               </Link>
             </div>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="pr-10 text-slate-900 dark:text-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
-          <Button type="submit" variant="gradient" className="w-full gap-2 mt-2" disabled={isLoading}>
+          <Button type="submit" variant="gradient" className="w-full gap-2 mt-2 font-bold shadow-md" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -121,7 +164,7 @@ export default function SignInPage() {
         </form>
 
         <div className="relative my-6 text-center text-xs after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-slate-200 dark:after:border-slate-800">
-          <span className="relative z-10 bg-white px-3 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+          <span className="relative z-10 bg-white px-3 text-slate-500 dark:bg-slate-900 dark:text-slate-400 font-medium">
             {t('orContinueWith', 'Or continue with')}
           </span>
         </div>
@@ -129,7 +172,7 @@ export default function SignInPage() {
         <Button
           type="button"
           variant="outline"
-          className="w-full gap-2 border-slate-200 dark:border-slate-800"
+          className="w-full gap-2 font-semibold shadow-sm"
           onClick={handleGoogleSignIn}
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -154,11 +197,11 @@ export default function SignInPage() {
         </Button>
       </CardContent>
 
-      <CardFooter className="justify-center border-t border-slate-100 dark:border-slate-850 py-4 text-xs text-slate-500">
+      <CardFooter className="justify-center border-t border-slate-100 dark:border-slate-800 py-4 text-xs text-slate-600 dark:text-slate-400">
         <span>{t('noAccount', "Don't have an account?")}</span>{' '}
         <Link
           href="/signup"
-          className="ml-1.5 font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:underline"
+          className="ml-1.5 font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:underline"
         >
           {tCommon('signUp', 'Create Account')}
         </Link>

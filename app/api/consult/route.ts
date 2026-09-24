@@ -44,8 +44,8 @@ export async function POST(req: Request) {
       locale,
     });
 
-    // 5. Query AI Failover Pipeline (Gemini -> Grok -> Llama -> Local Knowledge Base)
-    const result = await queryWithFailover(userPrompt, systemPrompt);
+    // 5. Query AI Failover Pipeline (Gemini 2.5 -> Grok -> Llama -> Local Knowledge Base)
+    const result = await queryWithFailover(userPrompt, systemPrompt, locale);
 
     return NextResponse.json({
       answer: result.text,

@@ -14,8 +14,8 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <div className="min-h-screen flex bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-        {/* Collapsible and Responsive Sidebar */}
+      <div className="min-h-screen flex bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        {/* Deep Slate High-Contrast Sidebar */}
         <Sidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
 
         {/* Main Content Area */}
